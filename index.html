@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Find the Spy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Ubuntu+Mono:wght@700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --dark-bg: #1a1a1a;
+      --neon-green: #39ff14;
+      --neon-red: #ff073a;
+      --neon-blue: #00f7ff;
+      --neon-purple: #bc13fe;
+    }
+
+    body {
+      background-color: var(--dark-bg);
+      color: white;
+      font-family: 'Ubuntu Mono', monospace;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(255, 0, 0, 0.05) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(0, 255, 255, 0.05) 0%, transparent 20%);
+    }
+
+    h1 {
+      font-family: 'Press Start 2P', cursive;
+      color: var(--neon-green);
+      text-shadow: 0 0 10px var(--neon-green);
+      animation: pulse 2s infinite alternate;
+      margin-bottom: 30px;
+    }
+
+    #setup,
+    #game,
+    #gameOverSection {
+      background: rgba(30, 30, 30, 0.8);
+      border: 2px solid var(--neon-blue);
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto 20px;
+      box-shadow: 0 0 15px rgba(0, 247, 255, 0.3);
+    }
+
+    input,
+    button {
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: 1px solid var(--neon-purple);
+      border-radius: 5px;
+      padding: 10px;
+      margin: 5px;
+      font-family: 'Ubuntu Mono', monospace;
+      transition: all 0.3s;
+    }
+
+    input:focus,
+    button:hover {
+      outline: none;
+      border-color: var(--neon-green);
+      box-shadow: 0 0 10px var(--neon-green);
+      transform: scale(1.05);
+    }
+
+    button {
+      cursor: pointer;
+      background: linear-gradient(145deg, #222, #111);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #wordSection {
+      background: rgba(0, 0, 0, 0.5);
+      border-left: 5px solid var(--neon-purple);
+      padding: 15px;
+      margin: 20px auto;
+      max-width: 300px;
+      animation: slideIn 0.5s ease-out;
+    }
+
+    #yourWord {
+      color: var(--neon-blue);
+      text-shadow: 0 0 8px var(--neon-blue);
+      font-size: 2rem;
+      margin: 10px 0;
+    }
+
+    #votingSection {
+      background: rgba(0, 0, 0, 0.7);
+      border-top: 3px solid var(--neon-red);
+      padding: 15px;
+      margin-top: 20px;
+    }
+
+    #voteButtons button {
+      display: block;
+      width: 80%;
+      margin: 10px auto;
+      background: rgba(255, 7, 58, 0.2);
+    }
+
+    #gameOverSection {
+      border-color: var(--neon-red);
+      animation: shake 0.5s;
+    }
+
+    #gameOverMessage {
+      font-size: 1.5rem;
+      margin: 20px 0;
+    }
+
+    /* Animations */
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      100% {
+        transform: scale(1.05);
+      }
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      20%,
+      60% {
+        transform: translateX(-10px);
+      }
+
+      40%,
+      80% {
+        transform: translateX(10px);
+      }
+    }
+
+    @keyframes spyWin {
+      0% {
+        background-color: var(--dark-bg);
+      }
+
+      50% {
+        background-color: rgba(255, 7, 58, 0.3);
+      }
+
+      100% {
+        background-color: var(--dark-bg);
+      }
+    }
+
+    @keyframes teamWin {
+      0% {
+        background-color: var(--dark-bg);
+      }
+
+      50% {
+        background-color: rgba(57, 255, 20, 0.3);
+      }
+
+      100% {
+        background-color: var(--dark-bg);
+      }
+    }
+
+    /* Victory Animations */
+    .spy-victory {
+      animation: spyWin 1s 3, shake 0.5s 3;
+    }
+
+    .team-victory {
+      animation: teamWin 1s 3;
+    }
+
+    /* Particles for celebrations */
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background-color: var(--neon-green);
+      opacity: 0;
+      z-index: 100;
+      animation: confetti 3s ease-out;
+    }
+
+    @keyframes confetti {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    /* Loading spinner update */
+    .loading-spinner {
+      border: 4px solid rgba(0, 247, 255, 0.2);
+      border-top: 4px solid var(--neon-blue);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      box-shadow: 0 0 10px var(--neon-blue);
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Find the Spy Game</h1>
+  <div id="setup">
+    <input type="text" id="roomId" placeholder="Room ID">
+    <input type="text" id="playerName" placeholder="Your Name">
+    <button onclick="createRoom()">Create Room</button>
+    <button onclick="joinRoom()">Join Room</button>
+  </div>
+
+  <div id="game" style="display:none;">
+    <h2 id="status"></h2>
+    <div class="loading-spinner" id="loadingSpinner"></div> <!-- Add this line -->
+    <div id="players"></div>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="wordSection" style="display:none;">
+    <h3>Your Word:</h3>
+    <div id="yourWord" style="font-size: 24px; font-weight: bold;"></div>
+  </div>
+
+  <div id="votingSection" style="display:none;">
+    <h3>Vote for who you think is the spy:</h3>
+    <div id="voteButtons"></div>
+  </div>
+
+  <div id="gameOverSection" style="display:none;">
+    <h3>Game Over!</h3>
+    <p id="gameOverMessage"></p>
+    <button onclick="restartGame()">Restart Game</button>
+    <button onclick="leaveRoom()">Leave Room</button>
+  </div>
+
+  <div id="gameMessages" style="display:none; margin-top: 20px;">
+    <p id="roundResultMessage" style="font-weight:bold; color: green;"></p>
+    <p id="eliminationMessage" style="color: red;"></p>
+  </div>
+
+  <div id="errorBox" style="display:none; margin: 10px 0;">
+    <p id="errorMessage" style="color: red; font-weight: bold;"></p>
+  </div>
+
+  <style>
+    #gameMessages {
+      padding: 15px;
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    #gameMessages p {
+      font-size: 16px;
+      margin: 10px 0;
+    }
+  </style>
+
+  <style>
+    /* Add this with your existing styles */
+    .loading-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 10px auto;
+      display: none;
+      /* Hidden by default */
+    }
+
+    .loading-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    /* Add to your existing styles */
+    .victory-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 999;
+      pointer-events: none;
+      animation: fadeOut 2s forwards;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      font-weight: bold;
+      text-shadow: 0 0 10px currentColor;
+    }
+
+    .spy-victory-overlay {
+      color: var(--neon-red);
+      animation: spyWinOverlay 1s 3, fadeOut 1s 3s forwards;
+    }
+
+    .team-victory-overlay {
+      color: var(--neon-green);
+      animation: teamWinOverlay 1s 3, fadeOut 1s 3s forwards;
+    }
+
+    @keyframes spyWinOverlay {
+      0% {
+        background-color: rgba(255, 7, 58, 0);
+      }
+
+      50% {
+        background-color: rgba(255, 7, 58, 0.3);
+      }
+
+      100% {
+        background-color: rgba(255, 7, 58, 0);
+      }
+    }
+
+    @keyframes teamWinOverlay {
+      0% {
+        background-color: rgba(57, 255, 20, 0);
+      }
+
+      50% {
+        background-color: rgba(57, 255, 20, 0.3);
+      }
+
+      100% {
+        background-color: rgba(57, 255, 20, 0);
+      }
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+      }
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+
+  <button id="startVotingBtn" style="display:none;" onclick="startVoting()">Start Voting</button>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let currentRoom = '';
+    let myId = '';
+    let isAlive = true;
+
+    function createRoom() {
+      const roomId = document.getElementById('roomId').value;
+      const playerName = document.getElementById('playerName').value;
+      currentRoom = roomId;
+      socket.emit('createRoom', roomId, playerName);
+    }
+
+    function joinRoom() {
+      const roomId = document.getElementById('roomId').value;
+      const playerName = document.getElementById('playerName').value;
+      currentRoom = roomId;
+      socket.emit('joinRoom', roomId, playerName);
+    }
+
+    function startGame() {
+      // Verify I'm the host before attempting to start
+      socket.emit('verifyHost', currentRoom, (isHost) => {
+        if (isHost) {
+          document.querySelector('#game button[onclick="startGame()"]').disabled = true;
+          socket.emit('startGame', currentRoom);
+        }
+      });
+    }
+    function startVoting() {
+      if (!isAlive) {
+        alert("You're eliminated and can't vote.");
+        return;
+      }
+
+      // Clear previous messages
+      document.getElementById('eliminationMessage').innerText = '';
+      document.getElementById('roundResultMessage').innerText = '';
+      document.getElementById('gameMessages').style.display = 'none';
+
+      document.getElementById('votingSection').style.display = 'block';
+      document.getElementById('startVotingBtn').style.display = 'none';
+      socket.emit('requestPlayers', currentRoom);
+    }
+
+    function createParticles(count, color) {
+      for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('confetti');
+        particle.style.left = Math.random() * 100 + 'vw';
+        particle.style.backgroundColor = color === 'neon-red' ? 'var(--neon-red)' : 'var(--neon-green)';
+        particle.style.animationDelay = Math.random() * 2 + 's';
+        document.body.appendChild(particle);
+
+        setTimeout(() => {
+          particle.remove();
+        }, 3000);
+      }
+    }
+
+
+    function submitVote(votedId) {
+      socket.emit('vote', { roomId: currentRoom, votedId });
+
+      // Disable vote buttons after submission
+      const buttons = document.querySelectorAll('#voteButtons button');
+      buttons.forEach(button => {
+        button.disabled = true;
+      });
+
+      document.getElementById('voteButtons').innerHTML = "<p>Vote submitted. Waiting for result...</p>";
+    }
+
+    function restartGame() {
+      // Show loading state only for restart
+      document.getElementById('loadingSpinner').style.display = 'block';
+      document.getElementById('status').innerHTML = `
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <span>Waiting for all players to restart...</span>
+    </div>
+  `;
+
+      // Reset UI
+      document.getElementById('gameOverSection').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
+      document.getElementById('wordSection').style.display = 'none';
+      document.getElementById('votingSection').style.display = 'none';
+
+      socket.emit('restartGame', currentRoom);
+    }
+
+    function leaveRoom() {
+      socket.emit('leaveRoom', currentRoom);
+      document.getElementById('gameOverSection').style.display = 'none';
+      document.getElementById('setup').style.display = 'block';
+    }
+
+    socket.on('roomUpdate', data => {
+      document.getElementById('game').style.display = 'block';
+
+      // Refresh player list with latest statuses
+      document.getElementById('players').innerHTML =
+        data.players.map(p => `<p>${p.name}${p.isHost ? ' (Host)' : ''} (${p.isAlive ? 'Alive' : 'Eliminated'})</p>`).join('');
+
+      // Keep track of self
+      if (!myId) {
+        myId = socket.id;
+      }
+
+      const me = data.players.find(p => p.id === myId);
+      if (me) {
+        isAlive = me.isAlive;
+        // Only show start button if I'm the host
+        document.querySelector('#game button[onclick="startGame()"]')
+          .style.display = me.isHost ? 'block' : 'none';
+        document.getElementById('startVotingBtn').style.display = isAlive ? 'block' : 'none';
+      }
+    });
+
+
+    socket.on('nextRound', () => {
+      // Hide voting section and show voting button if still alive
+      document.getElementById('votingSection').style.display = 'none';
+
+      const voteBtn = document.getElementById('startVotingBtn');
+      voteBtn.style.display = isAlive ? 'block' : 'none';
+
+      // Clear and hide previous game messages
+      document.getElementById('roundResultMessage').innerText = '';
+      document.getElementById('eliminationMessage').innerText = '';
+      document.getElementById('gameMessages').style.display = 'none';
+
+      // Optional: also refresh word section if needed
+    });
+
+    socket.on('wordAssigned', word => {
+      document.getElementById('wordSection').style.display = 'block';
+      document.getElementById('yourWord').textContent = word;
+
+      const voteBtn = document.getElementById('startVotingBtn');
+      voteBtn.style.display = isAlive ? 'block' : 'none';
+    });
+
+    socket.on('showVoteOptions', players => {
+      const voteButtons = players.map(p => `<button onclick="submitVote('${p.id}')">${p.name}</button>`).join('<br>');
+      document.getElementById('voteButtons').innerHTML = voteButtons;
+    });
+
+    socket.on('roundResult', (message, updatedPlayers) => {
+      // Display result in the message box
+      document.querySelector('#game button[onclick="startGame()"]').disabled = false;
+      document.getElementById('roundResultMessage').innerText = message;
+      document.getElementById('gameMessages').style.display = 'block';
+
+      setTimeout(() => {
+        document.getElementById('roundResultMessage').innerText = '';
+        document.getElementById('gameMessages').style.display = 'none';
+      }, 10000);
+
+      // Update players UI
+      document.getElementById('players').innerHTML =
+        updatedPlayers.map(p => `<p>${p.name} (${p.isAlive ? 'Alive' : 'Eliminated'})</p>`).join('');
+
+      // Only show victory animation if it's an actual victory condition
+      const isVictoryCondition = message.includes('Spy has been caught') ||
+        message.includes('Spy wins') ||
+        message.includes('spy has been caught') ||
+        message.includes('spy wins');
+
+      if (isVictoryCondition) {
+        const isSpyWin = message.includes('Spy wins') || message.includes('spy wins');
+        const overlay = document.createElement('div');
+        overlay.className = `victory-overlay ${isSpyWin ? 'spy-victory-overlay' : 'team-victory-overlay'}`;
+        overlay.textContent = isSpyWin ? 'SPY WINS!' : 'TEAM WINS!';
+        document.body.appendChild(overlay);
+
+        // Remove overlay after animation
+        setTimeout(() => {
+          overlay.remove();
+        }, 3000);
+      }
+    });
+
+    socket.on('playerEliminated', data => {
+      const message = `${data.name} has been eliminated! ${data.isSpy ? "Spy was caught!" : "Not a spy!"}`;
+      document.getElementById('eliminationMessage').innerText = message;
+      document.getElementById('gameMessages').style.display = 'block';
+
+      // Auto-hide after 15 seconds
+      setTimeout(() => {
+        document.getElementById('eliminationMessage').innerText = '';
+        document.getElementById('gameMessages').style.display = 'none';
+      }, 10000);
+    });
+
+    socket.on('gameOver', message => {
+      const isSpyWin = message.includes('Spy wins');
+
+      // Create full-screen overlay
+      const overlay = document.createElement('div');
+      overlay.className = `victory-overlay ${isSpyWin ? 'spy-victory-overlay' : 'team-victory-overlay'}`;
+      overlay.textContent = isSpyWin ? 'SPY WINS!' : 'TEAM WINS!';
+      document.body.appendChild(overlay);
+
+      // Basic UI updates
+      document.getElementById('gameOverSection').style.display = 'block';
+      document.getElementById('game').style.display = 'none';
+      document.getElementById('gameOverMessage').innerText = message;
+      document.querySelector('#game button[onclick="startGame()"]').disabled = false;
+
+      // Remove overlay after animation
+      setTimeout(() => {
+        overlay.remove();
+      }, 3000);
+
+      // Reset voting UI for next game
+      document.getElementById('votingSection').style.display = 'none';
+      document.getElementById('wordSection').style.display = 'none';
+      document.getElementById('startVotingBtn').style.display = 'none';
+    });
+
+    socket.on('gameRestarted', players => {
+      // Hide loading spinner
+      document.getElementById('loadingSpinner').style.display = 'none';
+
+      document.getElementById('status').innerText = "Game Restarted!";
+      document.getElementById('players').innerHTML =
+        players.map(p => `<p>${p.name} (Alive)</p>`).join('');
+    });
+
+    socket.on('waitingForPlayers', names => {
+      if (names.length === 0) {
+        document.getElementById('status').innerText = "All ready! Starting game...";
+      } else {
+        document.getElementById('status').innerText = "Waiting for: " + names.join(', ');
+      }
+    });
+
+    socket.on('youAre', ({ isAlive: status, id }) => {
+      isAlive = status;
+      myId = id;
+
+      const voteBtn = document.getElementById('startVotingBtn');
+      voteBtn.style.display = isAlive ? 'block' : 'none';
+    });
+
+    socket.on('errorMessage', message => {
+      const errorBox = document.getElementById('errorBox');
+      const errorMessage = document.getElementById('errorMessage');
+
+      errorMessage.innerText = message;
+      errorBox.style.display = 'block';
+
+      setTimeout(() => {
+        errorBox.style.display = 'none';
+        errorMessage.innerText = '';
+      }, 5000); // optional auto-hide
+    });
+
+  </script>
+</body>
+
+</html>

@@ -2,9 +2,10 @@
 <html>
 
 <head>
-  <title>Find the Spy</title>
+  <title>Find the Spy of Sandak-Phu</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Ubuntu+Mono:wght@700&display=swap"
     rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root {
       --dark-bg: #1a1a1a;
@@ -204,6 +205,16 @@
       animation: confetti 3s ease-out;
     }
 
+    .credit {
+      font-family: 'Ubuntu Mono', monospace;
+      color: var(--neon-purple);
+      text-align: center;
+      margin-top: -20px;
+      margin-bottom: 30px;
+      font-size: 0.9rem;
+      text-shadow: 0 0 5px var(--neon-purple);
+    }
+
     @keyframes confetti {
       0% {
         transform: translateY(0) rotate(0deg);
@@ -231,7 +242,8 @@
 </head>
 
 <body>
-  <h1>Find the Spy Game</h1>
+  <h1>Find the Spy in Sandak-Phu</h1>
+  <div class="credit">Sponsored by Sriparna</div>
   <div id="setup">
     <input type="text" id="roomId" placeholder="Room ID">
     <input type="text" id="playerName" placeholder="Your Name">

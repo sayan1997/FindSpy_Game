@@ -187,11 +187,11 @@
 
     /* Victory Animations */
     .spy-victory {
-      animation: spyWin 1s 3, shake 0.5s 3;
+      animation: spyWin 3s 3, shake 0.5s 3;
     }
 
     .team-victory {
-      animation: teamWin 1s 3;
+      animation: teamWin 3s 3;
     }
 
     /* Particles for celebrations */
@@ -284,6 +284,15 @@
     <p id="errorMessage" style="color: red; font-weight: bold;"></p>
   </div>
 
+  <div id="votingResultsModal"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; color:white; padding:20px; text-align:center;">
+    <div style="background:#333; max-width:500px; margin:100px auto; padding:20px; border-radius:10px;">
+      <h3>Voting Results</h3>
+      <div id="votingResultsContent"></div>
+      <button onclick="closeVotingResults()" style="margin-top:20px;">Close</button>
+    </div>
+  </div>
+
   <style>
     #gameMessages {
       padding: 15px;
@@ -297,6 +306,27 @@
     #gameMessages p {
       font-size: 16px;
       margin: 10px 0;
+    }
+
+    #votingResultsModal button {
+      background: var(--neon-purple);
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #votingResultsModal button:hover {
+      background: var(--neon-green);
+    }
+
+    #votingResultsContent p:last-child {
+      font-size: 1.2em;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 5px;
+      margin-top: 20px !important;
     }
   </style>
 
@@ -427,6 +457,7 @@
         }
       });
     }
+
     function startVoting() {
       if (!isAlive) {
         alert("You're eliminated and can't vote.");
@@ -441,6 +472,10 @@
       document.getElementById('votingSection').style.display = 'block';
       document.getElementById('startVotingBtn').style.display = 'none';
       socket.emit('requestPlayers', currentRoom);
+    }
+
+    function closeVotingResults() {
+      document.getElementById('votingResultsModal').style.display = 'none';
     }
 
     function createParticles(count, color) {
@@ -534,6 +569,19 @@
       // Optional: also refresh word section if needed
     });
 
+    socket.on('votingResults', (results) => {
+      const resultsContent = document.getElementById('votingResultsContent');
+      resultsContent.innerHTML =
+        results.votes.map(result =>
+          `<p>${result.voterName} voted for ${result.choice}</p>`
+        ).join('') +
+        `<p style="margin-top: 15px; font-weight: bold; color: ${results.eliminationMessage.includes('Spy') ? 'var(--neon-red)' : 'var(--neon-green)'
+        }">${results.eliminationMessage}</p>`;
+
+      document.getElementById('votingResultsModal').style.display = 'block';
+      setTimeout(closeVotingResults, 45000);
+    });
+
     socket.on('wordAssigned', word => {
       document.getElementById('wordSection').style.display = 'block';
       document.getElementById('yourWord').textContent = word;
@@ -549,9 +597,9 @@
 
     socket.on('roundResult', (message, updatedPlayers) => {
       // Display result in the message box
-      document.querySelector('#game button[onclick="startGame()"]').disabled = false;
-      document.getElementById('roundResultMessage').innerText = message;
-      document.getElementById('gameMessages').style.display = 'block';
+      // document.querySelector('#game button[onclick="startGame()"]').disabled = false;
+      // document.getElementById('roundResultMessage').innerText = message;
+      // document.getElementById('gameMessages').style.display = 'block';
 
       setTimeout(() => {
         document.getElementById('roundResultMessage').innerText = '';
@@ -578,7 +626,7 @@
         // Remove overlay after animation
         setTimeout(() => {
           overlay.remove();
-        }, 3000);
+        }, 9000);
       }
     });
 

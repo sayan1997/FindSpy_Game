@@ -19,7 +19,7 @@ const usedWordPairs = {};
 
 function getRandomWordPair(roomId) {
   // Filter out used pairs for this room
-  const availablePairs = wordPairs.filter(pair => 
+  const availablePairs = wordPairs.filter(pair =>
     !usedWordPairs[roomId]?.includes(JSON.stringify(pair))
   );
 
@@ -30,11 +30,11 @@ function getRandomWordPair(roomId) {
   }
 
   const selectedPair = availablePairs[Math.floor(Math.random() * availablePairs.length)];
-  
+
   // Track used pairs
   if (!usedWordPairs[roomId]) usedWordPairs[roomId] = [];
   usedWordPairs[roomId].push(JSON.stringify(selectedPair));
-  
+
   return selectedPair;
 }
 
@@ -166,15 +166,28 @@ io.on('connection', socket => {
         resultMessage = `It's a tie! No one was eliminated.`;
       }
 
+      const votingDetails = {
+        votes: room.votes.map(vote => {
+          const voter = room.players.find(p => p.id === vote.voter);
+          let choice;
+          if (vote.isSkip) {
+            choice = "Skip";
+          } else {
+            const votedPlayer = room.players.find(p => p.id === vote.votedId);
+            choice = votedPlayer ? votedPlayer.name : "Unknown";
+          }
+          return {
+            voterName: voter.name,
+            choice: choice
+          };
+        }),
+        eliminationMessage: resultMessage // This contains the full message we were showing before
+      };
+      
+      io.to(roomId).emit('votingResults', votingDetails);
+
       // Clear votes for next round
       room.votes = [];
-
-      // Broadcast result
-      io.to(roomId).emit('roundResult', resultMessage, room.players.map(p => ({
-        id: p.id,
-        name: p.name,
-        isAlive: p.isAlive
-      })));
 
       const alivePlayers = room.players.filter(p => p.isAlive);
       const spyAlive = alivePlayers.find(p => p.isSpy);
@@ -245,25 +258,25 @@ io.on('connection', socket => {
   socket.on('restartGame', roomId => {
     const room = rooms[roomId];
     if (!room) return;
-  
+
     const player = room.players.find(p => p.id === socket.id);
     if (player) {
       player.readyToRestart = true;
       player.ready = false; // Reset regular ready status
     }
-  
+
     // Separate connected vs disconnected players
     const connectedPlayers = room.players.filter(p => io.sockets.sockets.get(p.id));
     const disconnectedPlayers = room.players.filter(p => !io.sockets.sockets.get(p.id));
-  
+
     // Only consider connected players for restart
     const readyPlayers = connectedPlayers.filter(p => p.readyToRestart);
     const notReadyPlayers = connectedPlayers.filter(p => !p.readyToRestart);
-  
+
     // Show waiting message only for connected AND not-ready players
     const waitingForNames = notReadyPlayers.map(p => p.name);
     io.to(roomId).emit('waitingForPlayers', waitingForNames);
-  
+
     // When all connected players are ready
     if (readyPlayers.length === connectedPlayers.length) {
       // Reset all players (including disconnected ones)
@@ -273,7 +286,7 @@ io.on('connection', socket => {
         p.ready = false;
         p.readyToRestart = false;
       });
-      
+
       room.votes = [];
       room.wordPair = null;
       io.to(roomId).emit('gameRestarted', room.players);
@@ -288,7 +301,7 @@ io.on('connection', socket => {
     }
     for (const roomId in rooms) {
       if (rooms[roomId].players.some(p => p.readyToRestart)) {
-        io.to(roomId).emit('waitingForPlayers', 
+        io.to(roomId).emit('waitingForPlayers',
           rooms[roomId].players
             .filter(p => io.sockets.sockets.get(p.id) && !p.readyToRestart)
             .map(p => p.name)
